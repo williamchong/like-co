@@ -1,6 +1,8 @@
 import Web3 from 'web3';
 import { LIKE_COIN_ABI, LIKE_COIN_ADDRESS } from '@/constant/contract/likecoin';
 
+const metamask = require('metamascara');
+
 function timeout(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -23,30 +25,23 @@ class EthHelper {
     this.errCb = errCb;
     this.clearErrCb = clearErrCb;
     this.onWalletCb = onWalletCb;
-    setTimeout(() => this.pollForWeb3(), 1000);
     this.pollForWeb3();
   }
 
   async pollForWeb3() {
-    if (typeof window.web3 !== 'undefined') {
-      if (this.retryTimer) {
-        clearTimeout(this.retryTimer);
-        this.retryTimer = null;
-      }
-      if (!this.web3) {
-        this.web3 = new Web3(window.web3.currentProvider);
-      }
-      const network = await this.web3.eth.net.getNetworkType();
-      if (network === 'rinkeby') {
-        this.clearErrCb();
-        this.startApp();
-        this.isMetaMask = true;
-      } else {
-        this.errCb('testnet');
-        this.retryTimer = setTimeout(() => this.pollForWeb3(), 3000);
-      }
+    this.web3 = new Web3(metamask.createDefaultProvider());
+    this.isMetaMask = !!window.web3;
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    const network = await this.web3.eth.net.getNetworkType();
+    if (network === 'rinkeby') {
+      this.clearErrCb();
+      this.startApp();
+      this.isInited = true;
     } else {
-      this.errCb('web3');
+      this.errCb('testnet');
       this.retryTimer = setTimeout(() => this.pollForWeb3(), 3000);
     }
   }
@@ -64,7 +59,7 @@ class EthHelper {
         if (this.onWalletCb) this.onWalletCb(this.wallet);
         this.clearErrCb();
       } else {
-        if (this.isMetaMask) this.errCb('locked');
+        if (this.isInited) this.errCb('locked');
         this.retryTimer = setTimeout(() => this.getAccounts(), 3000);
       }
     });
@@ -78,6 +73,10 @@ class EthHelper {
       txReceipt = await this.web3.eth.getTransactionReceipt(txHash);
       if (txReceipt && (txReceipt.status === 0 || txReceipt.status === '0x0')) throw new Error('Transaction failed');
     }
+  }
+
+  getIsMetaMask() {
+    return this.isMetaMask;
   }
 
   getWallet() {
@@ -133,7 +132,7 @@ class EthHelper {
   }
 
   async signTransferDelegated(to, value, maxReward) {
-    if (!this.isMetaMask) return Promise.reject(new Error('No MetaMask'));
+    if (!this.isInited) return Promise.reject(new Error('Not Inited'));
     const from = this.getWallet();
     const signData = await this.genTypedSignData(from, to, value, maxReward);
     const nonce = signData.filter(param => param.name === 'nonce')[0].value;
@@ -162,7 +161,7 @@ class EthHelper {
   }
 
   async signNewUser(payload) {
-    if (!this.isMetaMask) return Promise.reject(new Error('No MetaMask'));
+    if (!this.isInited) return Promise.reject(new Error('Not Inited'));
     const from = this.getWallet();
     const signData = EthHelper.genTypedSignNewUser(payload);
     const rawSignature = await this.signTyped(signData, from);
