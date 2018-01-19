@@ -29,19 +29,24 @@ class EthHelper {
   }
 
   async pollForWeb3() {
-    this.web3 = new Web3(metamask.createDefaultProvider());
-    this.isMetaMask = !!window.web3;
-    if (this.retryTimer) {
-      clearTimeout(this.retryTimer);
-      this.retryTimer = null;
-    }
-    const network = await this.web3.eth.net.getNetworkType();
-    if (network === 'rinkeby') {
-      this.clearErrCb();
-      this.startApp();
-      this.isInited = true;
+    if (('serviceWorker' in navigator) || typeof window.web3 !== 'undefined') {
+      this.web3 = new Web3(metamask.createDefaultProvider());
+      this.isMetaMask = !!window.web3;
+      if (this.retryTimer) {
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
+      }
+      const network = await this.web3.eth.net.getNetworkType();
+      if (network === 'rinkeby') {
+        if (this.clearErrCb) this.clearErrCb();
+        this.startApp();
+        this.isInited = true;
+      } else {
+        if (this.errCb) this.errCb('testnet');
+        this.retryTimer = setTimeout(() => this.pollForWeb3(), 3000);
+      }
     } else {
-      this.errCb('testnet');
+      if (this.errCb) this.errCb('web3');
       this.retryTimer = setTimeout(() => this.pollForWeb3(), 3000);
     }
   }
@@ -57,9 +62,9 @@ class EthHelper {
         this.accounts = accounts;
         [this.wallet] = accounts;
         if (this.onWalletCb) this.onWalletCb(this.wallet);
-        this.clearErrCb();
+        if (this.clearErrCb) this.clearErrCb();
       } else {
-        if (this.isInited) this.errCb('locked');
+        if (this.isInited && this.errCb) this.errCb('locked');
         this.retryTimer = setTimeout(() => this.getAccounts(), 3000);
       }
     });

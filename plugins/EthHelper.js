@@ -18,14 +18,9 @@ export default ({ store }) => {
   EthHelper.initApp(
     (err) => {
       let errMsg = '';
-      if (EthHelper.getIsMetaMask()) {
-        if (err === 'web3') errMsg = web3Error;
-        else if (err === 'testnet') errMsg = testnetError;
-        else if (err === 'locked') errMsg = lockedError;
-      } else {
-        if (err === 'testnet') errMsg = netTestnetError; // eslint-disable-line no-lonely-if
-        else if (err === 'locked') errMsg = netLockedError;
-      }
+      if (err === 'web3') errMsg = web3Error;
+      else if (err === 'testnet') errMsg = EthHelper.getIsMetaMask() ? testnetError : netTestnetError;
+      else if (err === 'locked') errMsg = EthHelper.getIsMetaMask() ? lockedError : netLockedError;
       store.commit(types.UI_POPUP_ERR, errMsg);
     },
     () => {
