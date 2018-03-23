@@ -20,6 +20,7 @@ module.exports = {
     ],
     script: [
       { src: 'https://use.typekit.net/ube6iww.js' },
+      { src: 'https://connect.trezor.io/4/connect.js'},
       { src: '/vendor/typekit.js' },
       { src: '/vendor/fb/pixel.js' },
       { src: '/vendor/fb/sdk.js' },
@@ -53,7 +54,8 @@ module.exports = {
         'https://s.yimg.com',
         'https://js.intercomcdn.com',
         'https://widget.intercom.io',
-        'https://connect.facebook.net/',
+        'https://connect.facebook.net',
+        'https://connect.trezor.io',
       ],
     },
   },

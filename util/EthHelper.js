@@ -11,9 +11,24 @@ import { LIKE_COIN_ABI, LIKE_COIN_ADDRESS } from '@/constant/contract/likecoin';
 import { LIKE_COIN_ICO_ABI, LIKE_COIN_ICO_ADDRESS } from '@/constant/contract/likecoin-ico';
 import { IS_TESTNET, INFURA_HOST } from '@/constant';
 
+import createTrezorSubprovider from './wallet/trezor';
+
 const abiDecoder = require('abi-decoder');
 
 abiDecoder.addABI(LIKE_COIN_ABI);
+
+function createTrezorWeb3(networkId) {
+  const engine = new ProviderEngine();
+  const trezor = createTrezorSubprovider({
+    networkId,
+    accountsLength: 1,
+    accountsOffset: 0,
+  });
+  engine.addProvider(trezor);
+  engine.addProvider(new FetchSubprovider({ rpcUrl: INFURA_HOST }));
+  engine.start();
+  return new Web3(engine);
+}
 
 function createLedgerWeb3(networkId) {
   const engine = new ProviderEngine();
@@ -66,10 +81,10 @@ class EthHelper {
     this.pollForWeb3();
   }
 
-  async pollForWeb3(initType) {
+  async pollForWeb3(initType = 'trezor') {
     this.isInited = false;
     if (this.pollingTimer) {
-      clearInterval(this.pollingTimer);
+      clearTimeout(this.pollingTimer);
       this.pollingTimer = null;
     }
     if (this.retryTimer) {
@@ -77,7 +92,10 @@ class EthHelper {
       this.retryTimer = null;
     }
     if (initType || typeof window.web3 !== 'undefined') {
-      if (initType === 'ledger' && this.web3Type !== 'ledger') {
+      if (initType === 'trezor' && this.web3Type !== 'trezor') {
+        this.web3 = createTrezorWeb3(IS_TESTNET ? 4 : 1);
+        this.web3Type = 'trezor';
+      } else if (initType === 'ledger' && this.web3Type !== 'ledger') {
         this.web3 = createLedgerWeb3(IS_TESTNET ? 4 : 1);
         this.setWeb3Type('ledger');
       } else if (!this.web3 || this.web3Type !== 'window') {
@@ -109,7 +127,6 @@ class EthHelper {
     this.LikeCoin = new this.web3.eth.Contract(LIKE_COIN_ABI, LIKE_COIN_ADDRESS);
     this.LikeCoinICO = new this.web3.eth.Contract(LIKE_COIN_ICO_ABI, LIKE_COIN_ICO_ADDRESS);
     this.getAccounts();
-    this.pollingTimer = setInterval(() => this.getAccounts(), 3000);
   }
 
   getAccounts() {
@@ -125,6 +142,7 @@ class EthHelper {
         this.wallet = '';
         this.errCb('locked');
       }
+      // this.pollingTimer = setTimeout(() => this.getAccounts(), 3000);
     });
   }
 
