@@ -48,6 +48,7 @@ export default {
   computed: {
     ...mapGetters([
       'getProxyMissionReward',
+      'getUserInfo',
     ]),
     title() {
       return this.$t(`This.mission.${this.mission.id}.title`);
@@ -68,6 +69,8 @@ export default {
         return this.mission.referralReward;
       } else if (this.mission.isProxy && this.getProxyMissionReward(this.mission.id)) {
         return `${this.getProxyMissionReward(this.mission.id).div(ONE_LIKE).toFixed(2)} LIKE`;
+      } else if (this.getUserInfo.referrer && this.mission.refereeReward) {
+        return this.mission.refereeReward;
       }
       return this.mission.reward;
     },

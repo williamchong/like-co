@@ -25,7 +25,7 @@
         <md-dialog-content class="md-dialog-content">
           <div class="mission-dialog-content">
 
-            <div class="reward-label">{{ getPopupMission.reward }}</div>
+            <div class="reward-label">{{ mission.reward }}</div>
 
             <h1 class="title-label">{{ title }}</h1>
 
@@ -33,27 +33,11 @@
 
             <!-- BEGIN - Getting Start Section -->
             <div
-              v-if="getPopupMission.id === 'gettingStart'"
+              v-if="mission.id === 'gettingStart'"
               class="getting-start-form">
 
               <task-list
-                :tasks="[
-                  {
-                    id: 'paymentPageView',
-                    title: 'View your Like ID payment page',
-                    state: 'active',
-                  },
-                  {
-                    id: 'introductionVideoWatch',
-                    title: 'Watch introduction Video',
-                    state: 'completed',
-                  },
-                  {
-                    id: 'telegramGroupJoin',
-                    title: 'Join LikeCoin telegram group',
-                    state: 'active',
-                  },
-                ]"
+                :tasks="getTasks"
                 @click="onClickGettingStartTask" />
 
               <div class="lc-button-group">
@@ -67,7 +51,7 @@
 
             <!-- BEGIN - Verify Email Section -->
             <div
-              v-if="getPopupMission.id === 'verifyEmail'"
+              v-if="mission.id === 'verifyEmail'"
               class="verify-email-form">
 
               <md-field class="md-likecoin">
@@ -92,18 +76,21 @@
 
             <!-- BEGIN - Invite Friend Section -->
             <invite-friend-form
-              v-else-if="getPopupMission.id === 'inviteFriend'"
+              v-else-if="mission.id === 'inviteFriend'"
               form-id="mission-invite-friend-form"
               @invite="onInviteFriend" />
             <!-- END - Invite Friend Section -->
 
             <!-- BEGIN - Join Token Sale Section -->
             <div
-              v-else-if="getPopupMission.id === 'joinTokenSale'"
+              v-else-if="mission.id === ('joinTokenSale' || 'refereeTokenSale')"
               class="join-tokensale-form">
 
               <div class="lc-button-group">
-                <md-button class="md-likecoin">
+                <md-button
+                  class="md-likecoin"
+                  @click="$router.to({ name: 'in-tokensale' })"
+                >
                   {{ $t('Home.Sale.button.joinNow') }}
                 </md-button>
                 <br />
@@ -130,6 +117,7 @@ import { mapActions, mapGetters } from 'vuex';
 
 import InviteFriendForm from '~/components/InviteFriendForm';
 import TaskList from '~/components/Mission/TaskList';
+import { GETTING_STARTED_TASKS } from '@/constant';
 
 import { logTrackerEvent } from '@/util/EventLogger';
 
@@ -146,6 +134,7 @@ export default {
   },
   data() {
     return {
+      GETTING_STARTED_TASKS,
       FacebookIcon,
       LinkIcon,
       TwitterIcon,
@@ -155,20 +144,36 @@ export default {
   computed: {
     ...mapGetters([
       'getPopupMission',
+      'getMissionById',
       'getUserInfo',
     ]),
+    mission() {
+      return this.getMissionById(this.getPopupMission.id) || {};
+    },
     icon() {
-      return this.getPopupMission.icon || LikeCoinIcon;
+      return this.mission.icon || LikeCoinIcon;
     },
     title() {
-      return this.$t(`Mission.${this.getPopupMission.id}.title`);
+      return this.$t(`Mission.${this.missionId}.title`);
     },
     description() {
-      return this.$t(`Mission.${this.getPopupMission.id}.description`);
+      return this.$t(`Mission.${this.missionId}.description`);
+    },
+    missionId() {
+      return this.mission.id;
+    },
+    getTasks() {
+      return GETTING_STARTED_TASKS.map(id => ({
+        id,
+        title: `Mission.${this.missionId}.${id}`,
+        state: this.mission[id] ? 'completed' : 'active',
+      }));
     },
   },
   methods: {
-    ...mapActions([]),
+    ...mapActions([
+      'postStepMission',
+    ]),
     onInviteFriend(type) {
       switch (type) {
         case 'email':
@@ -186,13 +191,13 @@ export default {
         default:
       }
     },
-    onClickGettingStartTask(t) {
+    async onClickGettingStartTask(t) {
       switch (t.id) {
-        case 'paymentPageView':
+        case 'taskPaymentPage':
           window.open(`/${this.getUserInfo.displayName}`, 'payment-page');
           break;
 
-        case 'introductionVideoWatch': {
+        case 'taskVideo': {
           let link = 'https://youtu.be/';
           switch (this.$i18n.locale) {
             case 'cn':
@@ -209,7 +214,7 @@ export default {
           break;
         }
 
-        case 'telegramGroupJoin': {
+        case 'taskTelegram': {
           let link = 'https://t.me/likecoin';
           switch (this.$i18n.locale) {
             case 'ja':
@@ -229,6 +234,11 @@ export default {
 
         default:
       }
+      await this.postStepMission({
+        user: this.getUserInfo.user,
+        missionId: this.missionId,
+        taskId: t.id,
+      });
     },
     onDismiss() {
       this.isShowDialog = false;
@@ -236,7 +246,9 @@ export default {
   },
   watch: {
     getPopupMission(m) {
-      if (m) this.isShowDialog = true;
+      if (m) {
+        this.isShowDialog = true;
+      }
     },
   },
 };
