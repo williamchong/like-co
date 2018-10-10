@@ -48,6 +48,17 @@
               >
                 Github
               </md-button>
+              <md-button
+                class="md-likecoin"
+                @click="onClickLogin('wallet')"
+              >
+                {{ $t('Register.form.bindWallet') }}
+              </md-button>
+              <div
+                v-if="isBindWallet && wallet"
+              >
+                {{ 'wallet: ' + wallet }}
+              </div>
             </div>
           </div>
         </div>
@@ -65,18 +76,44 @@ import {
   firebaseHandleSignInEmailLink,
 } from '~/util/FirebaseApp';
 
+import EthHelper from '@/util/EthHelper';
+import User from '@/util/User';
+import { logTrackerEvent } from '@/util/EventLogger';
+
 export default {
   name: 'register-new',
   data() {
     return {
       likecoinId: '',
       email: '',
+      isBindWallet: false,
+      wallet: null,
+      avatarFile: null,
+      isEmailEnabled: false,
     };
   },
   computed: {
     ...mapGetters([
       'getCurrentLocale',
+      'getMetamaskError',
+      'getLocalWallet',
+      'getIsWeb3Polling',
     ]),
+  },
+  watch: {
+    getLocalWallet() {
+      this.wallet = this.getLocalWallet;
+      if (this.getIsWeb3Polling) {
+        this.stopWeb3Polling();
+        this.handleWalletSignIn();
+      }
+    },
+    getMetamaskError() {
+      if (this.isBindWallet && this.getMetamaskError) {
+        this.isBindWallet = false;
+        EthHelper.disableWeb3();
+      }
+    },
   },
   mounted() {
     if (firebaseIsSignInEmailLink()) {
@@ -87,6 +124,10 @@ export default {
     ...mapActions([
       'newUser',
       'doPostAuthRedirect',
+      'startWeb3Polling',
+      'stopWeb3Polling',
+      'refreshUser',
+      'setInfoMsg',
     ]),
     async handleEmailSignIn() {
       const result = await firebaseHandleSignInEmailLink();
@@ -104,6 +145,11 @@ export default {
     async onClickLogin(platform) {
       if (platform === 'email') {
         await firebaseSendSignInEmail({ likecoinId: this.likecoinId });
+      } else if (platform === 'wallet') {
+        const isStarted = await this.startWeb3Polling();
+        if (!isStarted) {
+          this.handleWalletSignIn();
+        }
       } else {
         const { accessToken, secret, firebaseIdToken } = await firebasePlatformSignIn(platform);
         const payload = {
@@ -121,6 +167,29 @@ export default {
       await this.newUser(payload);
       const router = this.$router;
       this.doPostAuthRedirect({ router });
+    },
+    startBindWallet() {
+      this.startWeb3Polling();
+      this.isBindWallet = true;
+    },
+    async handleWalletSignIn() {
+      try {
+        const userInfo = {
+          avatarFile: this.avatarFile,
+          user: this.likecoinId.toLowerCase().trim(),
+          wallet: this.wallet,
+          email: this.email.toLowerCase().trim(),
+          isEmailEnabled: this.isEmailEnabled,
+          locale: this.getCurrentLocale,
+        };
+        const data = await User.formatAndSignUserInfo(userInfo, this.$t('Sign.Message.registerUser'));
+        await this.newUser({ ...data });
+        logTrackerEvent(this, 'RegFlow', 'CompleteRegistration', 'click confirm to create new account and the action success', 1);
+        await this.refreshUser(this.wallet);
+        this.setInfoMsg(`${this.$t('Register.form.label.updatedInfo')}  <a href="/${this.user}">${this.$t('Register.form.label.viewPage')}</a>`);
+      } catch (err) {
+        console.error(err);
+      }
     },
   },
 };

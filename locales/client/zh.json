@@ -678,6 +678,7 @@
       "displayName": "顯示名稱",
       "claim": "領取",
       "couponCode": "兌換碼 (可選)",
+      "bindWallet": "綁定 MetaMask 地址",
       "label": {
         "updatedInfo": "資料已經更新",
         "viewPage": "到個人頁面"
@@ -781,7 +782,8 @@
       "notSupported": "你的錢包不支援這個功能",
       "ethInsufficient": "錢包內的 ETH 數量不足",
       "likecoinInsufficient": "錢包內的 LikeCoin 數量不足",
-      "sameUser": "不能轉賬給自己"
+      "sameUser": "不能轉賬給自己",
+      "metamaskWalletNotMatch": "你的錢包地址跟目前的 Metamask 地址不相符"
     }
   },
   "WhitePaper": {

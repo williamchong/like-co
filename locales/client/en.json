@@ -698,6 +698,7 @@
       "enableEmail": "Receive email notification for LikeCoin transaction and news update",
       "privacyPolicy": "Privacy Policy",
       "agreeTerms": "I agree to {privacyPolicy}.",
+      "bindWallet": "Bind MetaMask wallet",
       "label": {
         "updatedInfo": "Your information have been updated.",
         "viewPage": "View your page"
@@ -813,7 +814,8 @@
       "notSupported": "Your wallet does not support this function",
       "ethInsufficient": "Insufficient ETH in your wallet.",
       "likecoinInsufficient": "Insufficient LikeCoin in your wallet.",
-      "sameUser": "Sender and Recipient cannot be same"
+      "sameUser": "Sender and Recipient cannot be same",
+      "metamaskWalletNotMatch": "Your wallet address is not the same as current Metamask address."
     }
   },
   "WhitePaper": {
