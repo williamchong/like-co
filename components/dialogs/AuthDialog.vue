@@ -672,6 +672,8 @@ export default {
       'setWalletNoticeDialog',
       'openPopupDialog',
       'setAuthCoreToken',
+      'initAuthCoreCosmosWallet',
+      'fetchAuthCoreCosmosWallet',
     ]),
     setContentStyle({ height }) {
       const style = {
@@ -1099,6 +1101,11 @@ export default {
         if (isIDAvailable && tryName && ValidationHelper.checkUserNameValid(tryName)) {
           Vue.set(this.signInPayload, 'defaultLikeCoinId', tryName);
         }
+      }
+      if (this.platform === 'authcore') {
+        await this.initAuthCoreCosmosWallet();
+        const cosmosWallet = await this.fetchAuthCoreCosmosWallet();
+        Vue.set(this.signInPayload, 'cosmosWallet', cosmosWallet);
       }
 
       this.currentTab = 'register';
