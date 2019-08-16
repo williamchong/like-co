@@ -4,9 +4,9 @@ import 'firebase/auth';
 const URL = require('url-parse');
 
 const config = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.FIREBASE_PROJECT_ID,
+  apiKey: 'AIzaSyC-3elXTGa2y4u-Ng7qNFJYdYC2A6i2YBg',
+  authDomain: 'likecoin-develop.firebaseapp.com',
+  projectId: 'likecoin-develop',
 };
 
 export { firebase };

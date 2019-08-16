@@ -22,3 +22,5 @@ export const getUserSocialLinks = state => state.links;
 export const getUserSocialMeta = state => state.socialMeta;
 
 export const getUserLikeCoinAmountInBigNumber = state => state.likeCoinAmountInBigNumber;
+
+export const getUserAuthCoreAccessToken = state => state.authCoreAccessToken;
