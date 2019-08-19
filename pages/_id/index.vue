@@ -172,6 +172,7 @@
                           : $t('General.button.confirm')
                       }}
                     </md-button>
+                    <div id="authcore-cosmos-container" />
                   </no-ssr>
                   <p
                     v-if="isP2pUnavailable"
@@ -433,6 +434,8 @@ export default {
       'queryLikeCoinUsdPrice',
       'startWeb3Polling',
       'stopWeb3Polling',
+      'fetchAuthCoreCosmosWallet',
+      'prepareCosmosTxSigner',
     ]),
     async startPollingForWeb3() {
       this.isWaitingWeb3 = true;
@@ -510,7 +513,7 @@ export default {
             value,
           });
         } else if (this.isCosmos) {
-          const signer = {}; // TODO add cosmos signer
+          const signer = await this.prepareCosmosTxSigner();
           ({ txHash } = await this.sendCosmosPayment({
             signer,
             from,

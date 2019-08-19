@@ -18,6 +18,8 @@ export const ETH_NETWORK_NAME = IS_TESTNET ? 'rinkeby' : 'mainnet';
 
 export const BIGDIPPER_HOST = IS_TESTNET ? 'http://35.226.174.222' : '';
 
+export const COSMOS_WALLET_PREFIX = "m/44'/118'/0'/0";
+
 export const COSMOS_CHAIN_ID = IS_TESTNET ? 'likechain-cosmos-testnet-2' : 'likechain-kaitak';
 
 export const COSMOS_DENOM = 'nanolike';
