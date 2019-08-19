@@ -406,6 +406,7 @@ workflows:
             branches:
               only:
                 - feature/cosmos
+                - feature/temp_cosmos_deployment
           requires:
            - test
       - hold_deploy_taipei_frontend:
@@ -414,6 +415,7 @@ workflows:
             branches:
               only:
                 - feature/cosmos
+                - feature/temp_cosmos_deployment
           requires:
            - test
       - hold_deploy_mainnet_api:
