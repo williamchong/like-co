@@ -57,19 +57,19 @@ export default {
     async getUserInfo(e) {
       const {
         user,
-        intercomToken,
         displayName,
         email,
         wallet,
         cosmosWallet,
         isAuthCore,
       } = e;
-      if (this.$intercom) {
-        const opt = { LikeCoin: true };
+      if (window.HelpCrunch) {
+        let opt = { LikeCoin: true };
         if (user) opt.user_id = user;
-        if (intercomToken) opt.user_hash = intercomToken;
         if (displayName) opt.name = displayName;
         if (email) opt.email = email;
+        window.HelpCrunch('updateUser', opt);
+        opt = {};
         if (wallet) {
           opt.wallet = wallet;
         }
@@ -79,7 +79,7 @@ export default {
         if (isAuthCore) {
           opt.binded_authcore = true;
         }
-        this.$intercom.update(opt);
+        window.HelpCrunch('updateUserData', opt);
       }
       if (user) {
         if (this.$sentry) {
@@ -95,31 +95,32 @@ export default {
       }
     },
     getCurrentLocale(language) {
-      if (this.$intercom) {
-        this.$intercom.update({ language });
+      if (window.HelpCrunch) {
+        window.HelpCrunch('updateUserData', { language });
+        window.HelpCrunch('setPhraseList', language);
       }
     },
     getInfoMsg(message) {
-      if (this.getInfoIsError && this.$intercom) {
-        this.$intercom.update({ lastError: message });
-        this.$intercom.trackEvent('likecoin-store_error', { message });
+      if (this.getInfoIsError && window.HelpCrunch) {
+        window.HelpCrunch('updateUserData', { lastError: message });
+        window.HelpCrunch('trackEvent', 'likecoin-store_error', { message });
       }
     },
     getAuthCoreOAuthFactors(factors) {
-      if (this.$intercom && factors) {
+      if (window.HelpCrunch && factors) {
         const services = factors.map(f => f.service);
         const opt = services.reduce((accumOpt, service) => {
           // eslint-disable-next-line no-param-reassign
           if (service) accumOpt[`binded_${service.toLowerCase()}`] = true;
           return accumOpt;
         }, {});
-        this.$intercom.update(opt);
+        window.HelpCrunch('updateUserData', opt);
       }
     },
     getUserLikeCoinAmountInBigNumber(amount) {
-      if (this.$intercom && amount) {
+      if (window.HelpCrunch && amount) {
         const opt = { LIKE: amount.toFixed(4) };
-        this.$intercom.update(opt);
+        window.HelpCrunch('updateUserData', opt);
       }
     },
   },
@@ -133,13 +134,15 @@ export default {
       cosmosWallet,
       isAuthCore,
     } = this.getUserInfo;
-    if (this.$intercom) {
+    if (window.HelpCrunch) {
       const language = this.getCurrentLocale;
-      const opt = { LikeCoin: true };
+      let opt = { LikeCoin: true };
       if (user) opt.user_id = user;
       if (intercomToken) opt.user_hash = intercomToken;
       if (displayName) opt.name = displayName;
       if (email) opt.email = email;
+      window.HelpCrunch('updateUser', opt);
+      opt = {};
       if (language) opt.language = language;
       if (wallet) {
         opt.wallet = wallet;
@@ -157,7 +160,8 @@ export default {
         if (service) accumOpt[`binded_${service.toLowerCase()}`] = true;
         return accumOpt;
       }, {});
-      this.$intercom.boot({ ...opt, ...socialOpt });
+      window.HelpCrunch('showChatWidget');
+      window.HelpCrunch('updateUserData', { ...opt, ...socialOpt });
     }
     if (user) {
       if (this.$sentry) {
