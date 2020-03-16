@@ -19,13 +19,24 @@ export async function sendCosmosPayment(
       tos,
       value,
       values,
+      memo,
     } = payload;
     let txHash;
     let included;
     if (tos && values) {
-      ({ txHash, included } = await transferCosmosMultiple({ from, tos, values }, signer));
+      ({ txHash, included } = await transferCosmosMultiple({
+        from,
+        tos,
+        values,
+        memo,
+      }, signer));
     } else {
-      ({ txHash, included } = await transferCosmos({ from, to, value }, signer));
+      ({ txHash, included } = await transferCosmos({
+        from,
+        to,
+        value,
+        memo,
+      }, signer));
     }
     commit(types.UI_START_LOADING_TX);
     commit(types.PAYMENT_SET_PENDING_HASH, txHash);

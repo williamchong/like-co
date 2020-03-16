@@ -124,17 +124,22 @@ export async function queryLikeCoinBalance(addr) {
   return amountToLIKE(amount);
 }
 
-export async function sendTx(msgCallPromise, signer) {
+export async function sendTx(msgCallPromise, signer, { memo } = {}) {
   const { simulate, send } = await msgCallPromise;
   const gas = (await simulate({})).toString();
-  const { hash, included } = await send({ gas }, signer);
+  const { hash, included } = await send({ gas, memo }, signer);
   return { txHash: hash, included };
 }
 
-export function transfer({ from, to, value }, signer) {
+export function transfer({
+  from,
+  to,
+  value,
+  memo,
+}, signer) {
   const amount = LIKEToAmount(value);
   const msgPromise = api.MsgSend(from, { toAddress: to, amounts: [amount] });
-  return sendTx(msgPromise, signer);
+  return sendTx(msgPromise, signer, { memo });
 }
 
 async function MsgSendMultiple(
@@ -185,8 +190,13 @@ async function MsgSendMultiple(
   };
 }
 
-export function transferMultiple({ from, tos, values }, signer) {
+export function transferMultiple({
+  from,
+  tos,
+  values,
+  memo,
+}, signer) {
   const amounts = values.map(v => LIKEToAmount(v));
   const msgPromise = MsgSendMultiple(from, { toAddresses: tos, amounts });
-  return sendTx(msgPromise, signer);
+  return sendTx(msgPromise, signer, { memo });
 }

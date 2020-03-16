@@ -121,6 +121,17 @@
                     {{ computedTransferAmount }}
                   </div>
                 </section>
+                <section
+                  v-if="remarks"
+                  class="address-container"
+                >
+                  <div class="address-title">
+                    Remarks
+                  </div>
+                  <div class="address-content">
+                    {{ remarks }}
+                  </div>
+                </section>
               </template>
             </div>
           </div>
@@ -163,9 +174,6 @@
                     (${{ usdTransferStrValue }} USD)
                   </p>
                 </div>
-                <!-- <md-field> -->
-                <!--   <md-input placeholder="Remark (optional)" /> -->
-                <!-- </md-field> -->
                 <div
                   v-if="isLoading"
                   class="lc-margin-top-8 lc-text-align-center"
@@ -284,6 +292,7 @@ export default {
       avatar: '',
       displayName: '',
       amount: '',
+      remarks: '',
       avatarHalo: 'none',
       isBadAddress: false,
       isBadAmount: false,
@@ -310,14 +319,19 @@ export default {
     let transferTo;
     let redirectUri;
     let fee;
+    let remarks;
     if (query) {
       ({
         fee,
         transfer_amount: transferAmount,
         transfer_to: transferTo,
         redirect_uri: redirectUri,
-        remark: remarks,
+        remarks,
       } = query);
+    }
+    if (remarks) {
+      // TODO figure out if 255 is a good limit
+      remarks = remarks.substring(0, 255);
     }
     if (redirectUri) {
       // TODO check redirect whitelist
@@ -526,6 +540,7 @@ export default {
             from,
             tos: [to, this.transferTarget.cosmosWallet],
             values: [this.computedHostAmount, this.computedTransferAmount],
+            memo: this.remarks,
           });
         } else {
           txHash = await this.sendCosmosPayment({
@@ -533,6 +548,7 @@ export default {
             from,
             to,
             value: valueToSend,
+            memo: this.remarks,
           });
         }
         this.postTransaction({ txHash });
