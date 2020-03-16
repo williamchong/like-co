@@ -293,6 +293,7 @@ export default {
       platforms: {},
       isTransferMode: false,
       transferTarget: null,
+      redirectUri: '',
     };
   },
   async asyncData({
@@ -307,17 +308,18 @@ export default {
     }
     let transferAmount;
     let transferTo;
-    let redirectUrl;
+    let redirectUri;
     let fee;
     if (query) {
       ({
         fee,
         transfer_amount: transferAmount,
         transfer_to: transferTo,
-        redirect_url: redirectUrl,
+        redirect_uri: redirectUri,
+        remark: remarks,
       } = query);
     }
-    if (redirectUrl) {
+    if (redirectUri) {
       // TODO check redirect whitelist
     }
     if (transferTo) {
@@ -365,6 +367,7 @@ export default {
         transferTarget,
         transferFee: fee,
         transferAmount,
+        redirectUri,
       };
     }).catch((e) => { // eslint-disable-line no-unused-vars
       error({ statusCode: 404, message: '' });
@@ -518,31 +521,41 @@ export default {
         const signer = await this.prepareCosmosTxSigner();
         let txHash;
         if (this.isTransferMode) {
-          await this.sendCosmosPayment({
+          txHash = await this.sendCosmosPayment({
             signer,
             from,
             tos: [to, this.transferTarget.cosmosWallet],
             values: [this.computedHostAmount, this.computedTransferAmount],
           });
         } else {
-          await this.sendCosmosPayment({
+          txHash = await this.sendCosmosPayment({
             signer,
             from,
             to,
             value: valueToSend,
           });
         }
-        if (this.getIsShowingTxPopup) {
-          this.closeTxDialog();
-          this.$router.push({
-            name: 'in-tx-id',
-            params: { id: txHash, tx: this.getPendingTxInfo },
-          });
-        }
+        this.postTransaction({ txHash });
       } catch (error) {
         if (error.message !== 'VALIDATION_FAIL') console.error(error);
       } finally {
         this.isLoading = false;
+      }
+    },
+    postTransaction({ txHash, remarks, error } = {}) {
+      if (this.isTransferMode && this.redirectUri) {
+        const url = new URL(this.redirectUri, true);
+        if (txHash) url.query.tx_hash = txHash;
+        if (error) url.query.error = error;
+        if (remarks) url.query.remarks = remarks;
+        url.set('query', url.query);
+        window.location.href = url.toString();
+      } else if (this.getIsShowingTxPopup) {
+        this.closeTxDialog();
+        this.$router.push({
+          name: 'in-tx-id',
+          params: { id: txHash, tx: this.getPendingTxInfo },
+        });
       }
     },
     onAmountInput(value) {
