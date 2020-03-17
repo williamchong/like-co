@@ -255,6 +255,8 @@ import {
   apiGetSocialListById,
 } from '@/util/api/api';
 
+const URL = require('url-parse');
+
 const DEFAULT_P2P_AMOUNT_IN_USD = 0.25;
 
 function formatAmount(amount) {
@@ -565,6 +567,7 @@ export default {
         if (error) url.query.error = error;
         if (remarks) url.query.remarks = remarks;
         url.set('query', url.query);
+        console.log(url);
         window.location.href = url.toString();
       } else if (this.getIsShowingTxPopup) {
         this.closeTxDialog();
